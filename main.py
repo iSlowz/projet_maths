@@ -1,4 +1,5 @@
 import time
+import math
 
 
 def question2():
@@ -35,7 +36,6 @@ def solve(objects, cap):
     print("Liste des objets à prendre:", list_objects)
     print("Utilité totale:", sum_utility)
     print("Poids total:", sum_weight)
-    print("nombre d'addition:", nb_add)
 
 
 def solve2(objects, cap):
@@ -87,7 +87,7 @@ def solve2(objects, cap):
     # on va tester toutes les combinaisons possibles de poids, en additionnant les utilités des objets, et on garde la combinaison qui a le plus d'utilité
 
     combinations = generate_combinations(weights, nb_objects_per_weight, cap)
-    #print("Liste des combinaisons possibles:", combinations)
+    print("Liste des combinaisons possibles:", combinations)
     max_utility = 0
     max_weight = 0
     max_liste_objects = []
@@ -113,8 +113,62 @@ def solve2(objects, cap):
     print("Poids total:", max_weight)
 
 
+def knapsack_branch_and_bound1(list_objects, cap):  # marche pas
+
+    def callback(list_objects, cap, compteur=0, current_weight=0, current_utility=0, current_combination=[],
+                 combinations=[], left=True):
+        if current_weight > cap or compteur >= len(list_objects) - 1:
+            return
+
+        compteur += 1
+        if left:
+            current_combination.append(list_objects[compteur][0])
+            current_weight += list_objects[compteur][1]
+            current_utility += list_objects[compteur][2]
+
+        callback(list_objects, cap, compteur, current_weight, current_utility, current_combination, combinations, True)
+        if compteur != 0:
+            current_combination.pop()
+            current_weight -= list_objects[compteur][1]
+            current_utility -= list_objects[compteur][2]
+            combinations.append((current_combination, current_weight, current_utility))
+
+        callback(list_objects, cap, compteur, current_weight, current_utility, current_combination, combinations, False)
+        if compteur != 0:
+            current_combination.pop()
+            current_weight -= list_objects[compteur][1]
+            current_utility -= list_objects[compteur][2]
+            combinations.append((current_combination, current_weight, current_utility))
+        compteur -= 1
+
+    combinations = []
+    callback(list_objects, cap, 0, 0, 0, [], combinations)
+    print("Liste des combinaisons possibles:", combinations)
+    print("Liste des objets à prendre:", max(combinations, key=lambda x: x[2]))
+
+
+class Tree:
+    def __init__(self, valeur, gauche=None, droite=None, parent=None, level=0):
+        self.noeud = valeur
+        self.gauche = gauche
+        self.droite = droite
+        self.parent = parent
+        self.level = level
+
+    def add_child(self, valeur, left=True):
+        if left:
+            self.gauche = Tree(valeur)
+            self.gauche.parent = self
+        else:
+            self.droite = Tree(valeur)
+            self.droite.parent = self
+
+    def construire():
+        pass
+
+
 if __name__ == '__main__':
-    question2()
+    # question2()
     objects = {
         "Pompe": (0.2, 1.5),
         "Démonte-pneus": (0.1, 1.5),
@@ -150,6 +204,17 @@ if __name__ == '__main__':
     deb = time.time()
     solve2(objects, cap)
     fin = time.time()
-    print("Temps de la fonction :", fin - deb)
+    print("Temps de la fonction :",fin - deb)
+
+    #knapsack_branch_and_bound1(list_objects, cap)
+
+
+
+
+
+
+
+
+
 
 
