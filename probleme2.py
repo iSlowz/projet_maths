@@ -22,7 +22,26 @@ def bin_packing_probleme_d1_offline(marchandises, capacite):
     return wagons
 
 
+def bin_packing_probleme_d1_online(marchandises, capacite):
+    marchandises = [(marchandise[0], marchandise[1]) for marchandise in marchandises]
+    print(marchandises)
 
+    wagons = []  # liste de wagons, avec chaque wagon qui contient une liste de marchandises
+    wagons_poids = []  # liste de poids des wagons
+    for marchandise in marchandises:
+        if not wagons:
+            wagons.append([marchandise])
+            wagons_poids.append(marchandise[1])
+        else:
+            for i in range(len(wagons)):
+                if wagons_poids[i] + marchandise[1] <= capacite:
+                    wagons[i].append(marchandise)
+                    wagons_poids[i] += marchandise[1]
+                    break
+            else:
+                wagons.append([marchandise])
+                wagons_poids.append(marchandise[1])
+    return wagons
 
 
 
