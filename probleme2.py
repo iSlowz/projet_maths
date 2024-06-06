@@ -1,5 +1,11 @@
+import math
+import random
+
+import matplotlib.pyplot as plt
+
 
 def bin_packing_probleme_d1_offline(marchandises, capacite):
+    # on utilise first fit
     marchandises = [(marchandise[0], marchandise[1]) for marchandise in marchandises]
     marchandises.sort(key=lambda x: x[1], reverse=True)
     print(marchandises)
@@ -23,6 +29,7 @@ def bin_packing_probleme_d1_offline(marchandises, capacite):
 
 
 def bin_packing_probleme_d1_online(marchandises, capacite):
+    # on utilise first fit
     marchandises = [(marchandise[0], marchandise[1]) for marchandise in marchandises]
     print(marchandises)
 
@@ -43,6 +50,339 @@ def bin_packing_probleme_d1_online(marchandises, capacite):
                 wagons_poids.append(marchandise[1])
     return wagons
 
+
+def bin_packing_probleme_d1_offline_best(marchandises, capacite):
+    # on utilise best fit
+    marchandises = [(marchandise[0], marchandise[1]) for marchandise in marchandises]
+    marchandises.sort(key=lambda x: x[1], reverse=True)
+    print(marchandises)
+
+    wagons = []  # liste de wagons, avec chaque wagon qui contient une liste de marchandises
+    wagons_poids = []  # liste de poids des wagons
+    for marchandise in marchandises:
+        wagons_poids_temp = wagons_poids.copy()
+        if not wagons_poids_temp:
+            wagons_poids_temp.append(capacite)
+        for i in range(len(wagons)):
+            wagons_poids_temp[i] -= marchandise[1]
+        wagons_poids_sup = [(wagons_poids_temp[i], i) for i in range(len(wagons)) if wagons_poids_temp[i] > 0]
+        if wagons_poids_sup:
+            best_wagon = min(wagons_poids_sup, key=lambda x: x[0])
+            wagons[best_wagon[1]].append(marchandise)
+            wagons_poids[best_wagon[1]] -= marchandise[1]
+        else:
+            wagons.append([marchandise])
+            wagons_poids.append(capacite - marchandise[1])
+
+    return wagons
+
+
+def bin_packing_probleme_d1_online_best(marchandises, capacite):
+    # on utilise best fit
+    marchandises = [(marchandise[0], marchandise[1]) for marchandise in marchandises]
+    print(marchandises)
+
+    wagons = []  # liste de wagons, avec chaque wagon qui contient une liste de marchandises
+    wagons_poids = []  # liste de poids des wagons
+    for marchandise in marchandises:
+        wagons_poids_temp = wagons_poids.copy()
+        if not wagons_poids_temp:
+            wagons_poids_temp.append(capacite)
+        for i in range(len(wagons)):
+            wagons_poids_temp[i] -= marchandise[1]
+        wagons_poids_sup = [(wagons_poids_temp[i], i) for i in range(len(wagons)) if wagons_poids_temp[i] > 0]
+        if wagons_poids_sup:
+            best_wagon = min(wagons_poids_sup, key=lambda x: x[0])
+            wagons[best_wagon[1]].append(marchandise)
+            wagons_poids[best_wagon[1]] -= marchandise[1]
+        else:
+            wagons.append([marchandise])
+            wagons_poids.append(capacite - marchandise[1])
+
+    return wagons
+
+
+class Train:
+    def __init__(self):
+        self.wagons = []
+
+    def add_wagon(self, wagon):
+        self.wagons.append(wagon)
+
+
+class Wagon:
+    def __init__(self, capacite=(11.583, 2.294, 2.567)):
+        self.max_length = capacite[0]
+        self.max_width = capacite[1]
+        self.max_height = capacite[2]
+        self.actual_width = 0
+        self.shelves = []
+
+    def add_shelf(self, shelf):
+        # shelf.max_width = self.width - self.actual_width
+        self.shelves.append(shelf)
+        self.get_actual_width()
+
+    def get_actual_width(self):
+        self.actual_width = sum([shelf.actual_width for shelf in self.shelves])
+
+    def print(self):
+        for i in self.shelves:
+            i.print()
+
+
+class Shelf:
+    def __init__(self, capacite=11.583):
+        self.max_length = capacite
+        self.actual_length = 0
+        self.actual_width = 0
+        self.marchandises = []
+
+    def add_marchandise(self, marchandise):
+        self.marchandises.append(marchandise)
+        self.actual_length += marchandise.length
+
+    def print(self):
+        for i in self.marchandises:
+            i.print()
+
+        print(self.marchandises)
+
+    def __repr__(self) -> str:
+        return str(self.marchandises)
+
+
+class Marchandise:
+    def __init__(self, name, length, width, height):
+        self.name = name
+        self.length = length
+        self.width = width
+        self.height = height
+        self.aire = length * width
+
+    def print(self):
+        print("(", self.name, self.length, self.width, self.height, ")")
+
+
+def bin_packing_probleme_d2_online_first(list_marchandises, capacite):
+    # on utilise first fit
+    marchandises = []
+    for marchandise in list_marchandises:
+        marchandises.append(Marchandise(marchandise[0], marchandise[1], marchandise[2], marchandise[3]))
+    compt_sup_2 = 0
+    compt_objet = 0
+    for marchandise in marchandises:
+        compt_objet += 1
+        if marchandise.width > 1.9:
+            compt_sup_2 += 1
+        print(marchandise.name, marchandise.length, marchandise.width, marchandise.height)
+
+    print('sup à 2 : ', compt_sup_2)
+    print('compt objet : ', compt_objet)
+
+    train = Train()
+    print(len(marchandises))
+    for marchandise in marchandises:
+        if not train.wagons:
+            print("a")
+            wagon = Wagon()
+            shelf = Shelf()
+            shelf.add_marchandise(marchandise)
+            shelf.actual_width = marchandise.width
+            wagon.add_shelf(shelf)
+            train.add_wagon(wagon)
+            # print(shelf.actual_width)
+            # print(marchandises[1].width)
+        else:
+            placed = False
+            for i in range(len(train.wagons)):
+                if train.wagons[i].shelves:
+                    for shelf in train.wagons[i].shelves:
+                        # print("test", shelf.actual_length, marchandise.length, shelf.max_length)
+                        if shelf.actual_length + marchandise.length <= shelf.max_length:
+                            if shelf.actual_width < marchandise.width:
+
+                                if train.wagons[i].actual_width - shelf.actual_width + marchandise.width <= \
+                                        train.wagons[i].max_width and not placed:
+                                    # print("b")
+                                    shelf.add_marchandise(marchandise)
+                                    shelf.actual_width = marchandise.width
+                                    train.wagons[i].get_actual_width()
+                                    placed = True
+                                    break
+
+                            else:
+                                if not placed:
+                                    # print("c")
+                                    shelf.add_marchandise(marchandise)
+                                    placed = True
+                                    break
+
+                        else:
+                            if train.wagons[i].actual_width + marchandise.width <= train.wagons[
+                                i].max_width and not placed:
+                                # print("d")
+                                shelf = Shelf()
+                                shelf.add_marchandise(marchandise)
+                                shelf.actual_width = marchandise.width
+                                train.wagons[i].add_shelf(shelf)
+                                placed = True
+                                break
+
+                else:
+                    if not placed:
+                        # print("f")
+
+                        shelf = Shelf()
+                        shelf.add_marchandise(marchandise)
+                        shelf.actual_width = marchandise.width
+                        train.wagons[i].add_shelf(shelf)
+                        placed = True
+                        break
+            else:
+                if not placed:
+                    wagon = Wagon()
+                    shelf = Shelf()
+                    shelf.add_marchandise(marchandise)
+                    shelf.actual_width = marchandise.width
+                    wagon.add_shelf(shelf)
+                    train.add_wagon(wagon)
+
+    return train
+
+
+def bin_packing_probleme_d2_offline_first(list_marchandises, capacite):
+    # on utilise first fit
+    list_marchandises.sort(key=lambda x: x[2], reverse=True)
+    marchandises = []
+    for marchandise in list_marchandises:
+        marchandises.append(Marchandise(marchandise[0], marchandise[1], marchandise[2], marchandise[3]))
+    compt_sup_2 = 0
+    compt_objet = 0
+    for marchandise in marchandises:
+        compt_objet += 1
+        if marchandise.width > 1.9:
+            compt_sup_2 += 1
+        print(marchandise.name, marchandise.length, marchandise.width, marchandise.height)
+
+    print('sup à 2 : ', compt_sup_2)
+    print('compt objet : ', compt_objet)
+
+    train = Train()
+    print(len(marchandises))
+    for marchandise in marchandises:
+        if not train.wagons:
+            print("a")
+            wagon = Wagon()
+            shelf = Shelf()
+            shelf.add_marchandise(marchandise)
+            shelf.actual_width = marchandise.width
+            wagon.add_shelf(shelf)
+            train.add_wagon(wagon)
+            # print(shelf.actual_width)
+            # print(marchandises[1].width)
+        else:
+            placed = False
+            for i in range(len(train.wagons)):
+                if train.wagons[i].shelves:
+                    for shelf in train.wagons[i].shelves:
+                        # print("test", shelf.actual_length, marchandise.length, shelf.max_length)
+                        if shelf.actual_length + marchandise.length <= shelf.max_length:
+                            if shelf.actual_width < marchandise.width:
+
+                                if train.wagons[i].actual_width - shelf.actual_width + marchandise.width <= \
+                                        train.wagons[i].max_width and not placed:
+                                    # print("b")
+                                    shelf.add_marchandise(marchandise)
+                                    shelf.actual_width = marchandise.width
+                                    train.wagons[i].get_actual_width()
+                                    placed = True
+                                    break
+
+                            else:
+                                if not placed:
+                                    # print("c")
+                                    shelf.add_marchandise(marchandise)
+                                    placed = True
+                                    break
+
+                        else:
+                            if train.wagons[i].actual_width + marchandise.width <= train.wagons[
+                                i].max_width and not placed:
+                                # print("d")
+                                shelf = Shelf()
+                                shelf.add_marchandise(marchandise)
+                                shelf.actual_width = marchandise.width
+                                train.wagons[i].add_shelf(shelf)
+                                placed = True
+                                break
+
+                else:
+                    if not placed:
+                        # print("f")
+
+                        shelf = Shelf()
+                        shelf.add_marchandise(marchandise)
+                        shelf.actual_width = marchandise.width
+                        train.wagons[i].add_shelf(shelf)
+                        placed = True
+                        break
+            else:
+                if not placed:
+                    wagon = Wagon()
+                    shelf = Shelf()
+                    shelf.add_marchandise(marchandise)
+                    shelf.actual_width = marchandise.width
+                    wagon.add_shelf(shelf)
+                    train.add_wagon(wagon)
+
+    return train
+
+
+def show_wagons_2d(wagons: list, contenair_length: float, contenair_width: float) -> None:
+    num_wagons = len(wagons)
+    cols = math.ceil(math.sqrt(num_wagons))
+    rows = math.ceil(num_wagons / cols)
+
+    _, axes = plt.subplots(rows, cols, figsize=(15, 10))
+
+    if rows > 1:
+        axes = axes.flatten()
+    else:
+        axes = [axes]
+
+    for i, (wagon, ax) in enumerate(zip(wagons, axes)):
+        wagon_current_length = 0
+        wagon_current_width = 0
+        wagon_current_width_row = 0
+
+        ax.set_xticks([])
+        ax.set_yticks([])
+        ax.set_xlim(0, contenair_length)
+        ax.set_ylim(0, contenair_width)
+        ax.set_aspect('equal')
+
+        for shelf in wagon.shelves:
+            color = random.choice(['r', 'g', 'b', 'c', 'm', 'y', 'k'])
+            for marchandise in shelf.marchandises:
+                if wagon_current_length + marchandise.length <= contenair_length:
+                    ax.add_patch(plt.Rectangle((wagon_current_length, wagon_current_width), marchandise.length,
+                                               marchandise.width, alpha=0.5, color=color))
+                    wagon_current_length += marchandise.length
+                    wagon_current_width_row = max(wagon_current_width_row, marchandise.width)
+                else:
+                    wagon_current_width += wagon_current_width_row
+                    wagon_current_length = marchandise.length
+                    wagon_current_width_row = marchandise.width
+                    ax.add_patch(
+                        plt.Rectangle((0, wagon_current_width), marchandise.length, marchandise.width, alpha=0.5,
+                                      color=color))
+
+    for j in range(i + 1, len(axes)):
+        axes[j].axis('off')
+
+    plt.tight_layout()
+    plt.show()
 
 
 list_marchandises = [
@@ -148,6 +488,21 @@ list_marchandises = [
     ("Pneus", 6, 1.2, 1.3)
 ]
 
-wagons = bin_packing_probleme_d1_offline(list_marchandises, 11.583)
-print(wagons)
-print("Nombre de wagons:", len(wagons))
+
+
+def print_train(train):
+    compt_marchandise = 0
+    compt_sup_2 = 0
+    for i, wagon in enumerate(train.wagons):
+        # print(f"Wagon {i+1}:")
+        for j, shelf in enumerate(wagon.shelves):
+            # print(f"\tShelf {j+1}:")
+            for k, marchandise in enumerate(shelf.marchandises):
+                if marchandise.width > 1.9:
+                    compt_sup_2 += 1
+                compt_marchandise += 1
+                # print(f"\t\tMarchandise {k+1}: {marchandise.name} ({marchandise.length}, {marchandise.width}, {marchandise.height})")
+    print('sup à 2 : ', compt_sup_2)
+    print('compt objet : ', compt_marchandise)
+
+
